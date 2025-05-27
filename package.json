@@ -2,7 +2,6 @@
   "name": "reactive-weather",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
   "scripts": {
     "start": "parcel public/index.html --open",
     "test": "echo \"Error: no test specified\" && exit 1"
