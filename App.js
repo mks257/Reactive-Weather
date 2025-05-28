@@ -1,23 +1,20 @@
-import React from 'react';
-// Import data and WeatherCard here
-const WeatherCard = require("./components/WeatherCard");
-const cities = require("./data"); 
-
+import React, { useState } from 'react';
+import WeatherCard from './components/WeatherCard';
+import Location from './components/location';
+import cities from './data';
 
 function App() {
-    return (
-        <>
-            <h1 className = "title">REACTIVE WEATHER</h1>
-            <h3 className = "subtitle">Up to the minute weather news</h3>
-            <div className = "app">
-                {cities.map((city, index) => (
-                    <WeatherCard key={index} data={city} />
-                ))}
+  const [location, setLocation] = useState("New York City"); // You can pick your default city
 
-            </div>
-            
-        </>
-    )
+  return (
+    <>
+      <h1 className="title">REACTIVE WEATHER</h1>
+      <h3 className="subtitle">Up to the minute weather news</h3>
+      <div className="app">
+        <Location data={cities} location={location} setLocation={setLocation} />
+      </div>
+    </>
+  );
 }
 
 export default App;
