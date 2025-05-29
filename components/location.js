@@ -1,35 +1,77 @@
-import React from 'react';
-import sunny from 'url:../assets/Sunny.svg';
-import rainy from 'url:../assets/Rainy.svg';
-import cloudy from 'url:../assets/Cloudy.svg';
-import partlyCloudy from 'url:../assets/PartlyCloudy.svg';
+import React, { useEffect, useState } from "react";
 
-const iconMap = {
-  Sunny: sunny,
-  Rainy: rainy,
-  Cloudy: cloudy,
-  "Partly cloudy": partlyCloudy,
-};
+function Location({ location }) {
+  const [weatherData, setWeatherData] = useState(null);
+  const [notFound, setNotFound] = useState(false);
+  const [unit, setUnit] = useState("celsius");
 
-function Location({ data, location }) {
-  const cityData = data.find((item) => item.city === location);
+  useEffect(() => {
+    if (!location) return;
 
-  if (!cityData) return <p>No weather data found for {location}</p>;
+    const fetchWeather = async () => {
+      try {
+        // Step 1: Convert city name to coordinates
+        const geoRes = await fetch(
+          `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}`
+        );
+        const geoData = await geoRes.json();
+        const city = geoData.results?.[0];
 
-  const icon = iconMap[cityData.forecast] || sunny;
+        if (!city) {
+          setNotFound(true);
+          setWeatherData(null);
+          return;
+        }
+
+        const { latitude, longitude } = city;
+
+        // Step 2: Get weather using coordinates
+        const weatherRes = await fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&temperature_unit=${unit}&timezone=auto`
+        );
+
+        const weather = await weatherRes.json();
+
+        setNotFound(false);
+        setWeatherData({
+          city: city.name,
+          current: weather.current_weather,
+          forecast: weather.daily,
+        });
+      } catch (err) {
+        console.error("Error fetching weather:", err);
+        setNotFound(true);
+        setWeatherData(null);
+      }
+    };
+
+    fetchWeather();
+  }, [location, unit]);
+
+  if (notFound) {
+    return <p>No weather data found for "{location}"</p>;
+  }
+
+  if (!weatherData) return <p>Loading...</p>;
 
   return (
     <div className="card">
-      <div className="img-container">
-        <img className="card-img-top" src={icon} alt={cityData.forecast} id="icon" />
-      </div>
-      <div className="card-body">
-        <h3 className="card-title">{cityData.city}</h3>
-        <h5 className="card-text">Temperature: {cityData.temperature}°C</h5>
-        <h5 className="card-text">Forecast: {cityData.forecast}</h5>
-      </div>
+      <h3>{weatherData.city}</h3>
+      <p>Current Temp: {weatherData.current.temperature}°C</p>
+      <p>Forecast:</p>
+      <ul>
+        {weatherData.forecast.time.map((day, index) => (
+          <li key={day}>
+            {day}: {weatherData.forecast.temperature_2m_min[index]}°C - {weatherData.forecast.temperature_2m_max[index]}°C, Precipitation: {weatherData.forecast.precipitation_sum[index]} mm
+          </li>
+        ))}
+      </ul>
     </div>
   );
+  <button onClick={() => setUnit(unit === "celsius" ? "fahrenheit" : "celsius")}>
+   Switch to {unit === "celsius" ? "Fahrenheit" : "Celsius"}
+  </button>
+
 }
 
 export default Location;
